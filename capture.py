@@ -1,8 +1,8 @@
 import cv2
 
 capture = cv2.VideoCapture(0)
-# width = int(capture.get(3))
-# height = int(capture.get(4))
+width = int(capture.get(3))
+height = int(capture.get(4))
 
 if not capture.isOpened():
     raise RuntimeError("Could not open webcam")

@@ -3,6 +3,7 @@ from PIL import Image, ImageTk
 import cv2
 
 import capture
+import pipeline
 
 
 class UI:
@@ -14,8 +15,20 @@ class UI:
         self.webcam_label = tk.Label(root)
         self.webcam_label.pack()
 
-        self.test_label = tk.Label(root, text="Test")
-        self.test_label.pack()
+        self.snap_button = tk.Button(root, text="Take Snapshot", command=self.on_snap_button_pressed)
+        self.snap_button.pack()
+
+        self.webcam_mirrored = tk.BooleanVar()
+        self.mirror_switch = tk.Checkbutton(root, text="Mirror webcam", 
+                                            variable=self.webcam_mirrored,
+                                            onvalue=True, offvalue=False)
+        self.mirror_switch.pack()
+
+        self.brightness_label = tk.Label(root, text="Brightness")
+        self.brightness_label.pack()
+        self.brightness_slider = tk.Scale(root, from_=-100, to=100, orient="horizontal")
+        self.brightness_slider.set(0)
+        self.brightness_slider.pack()
 
         self.running = True
 
@@ -29,7 +42,10 @@ class UI:
         if not self.running:
             return
 
-        frame = capture.get_frame()
+        frame = pipeline.process_frame(
+            mirrored=self.webcam_mirrored.get(),
+            brightness_offset=self.brightness_slider.get()
+        )
 
         if frame is not None:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -51,6 +67,9 @@ class UI:
         self.running = False
         capture.release()
         self.root.destroy()
+
+    def on_snap_button_pressed(self):
+        print("af")
 
 
 if __name__ == "__main__":
