@@ -1,17 +1,22 @@
 import tkinter as tk
+import datetime as dt
 from PIL import Image, ImageTk
 import cv2
+import os
 
 import capture
 import pipeline
 
 
 class UI:
+
     def __init__(self, root):
         self.root = root
         self.root.title("Webcam Filter")
+        self.frame = None
 
-        # UI element to display video
+        # UI elements
+
         self.webcam_label = tk.Label(root)
         self.webcam_label.pack()
 
@@ -24,11 +29,23 @@ class UI:
                                             onvalue=True, offvalue=False)
         self.mirror_switch.pack()
 
-        self.brightness_label = tk.Label(root, text="Brightness")
-        self.brightness_label.pack()
-        self.brightness_slider = tk.Scale(root, from_=-100, to=100, orient="horizontal")
+        self.brightness_slider = tk.Scale(root, label="Brightness", 
+                                          from_=-100, to=100, 
+                                          orient="horizontal")
         self.brightness_slider.set(0)
         self.brightness_slider.pack()
+
+        self.contrast_slider = tk.Scale(root, label="Contrast", 
+                                        from_=0.0, to=2.0, resolution=0.05, 
+                                        orient="horizontal")
+        self.contrast_slider.set(1.0)
+        self.contrast_slider.pack()
+
+        self.saturation_slider = tk.Scale(root, label="Saturation", 
+                                          from_=0.0, to=2.0, resolution=0.05, 
+                                          orient="horizontal")
+        self.saturation_slider.set(1.0)
+        self.saturation_slider.pack()
 
         self.running = True
 
@@ -38,20 +55,24 @@ class UI:
         # handle window close properly
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
+
+
     def update_frame(self):
         if not self.running:
             return
 
-        frame = pipeline.process_frame(
+        self.frame = pipeline.process_frame(
             mirrored=self.webcam_mirrored.get(),
-            brightness_offset=self.brightness_slider.get()
+            brightness_offset=self.brightness_slider.get(),
+            contrast_strength=self.contrast_slider.get(),
+            saturation_strength=self.saturation_slider.get()
         )
 
-        if frame is not None:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if self.frame is not None:
+            rgb_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
 
             # Convert to PIL image
-            img = Image.fromarray(frame)
+            img = Image.fromarray(rgb_frame)
 
             # Convert to Tkinter image
             imgtk = ImageTk.PhotoImage(image=img)
@@ -69,7 +90,14 @@ class UI:
         self.root.destroy()
 
     def on_snap_button_pressed(self):
-        print("af")
+        if self.frame is not None:
+            now = dt.datetime.now()
+            file_name = "snapshot_" + now.strftime("%y%m%d%H%M%S") + ".png"
+
+            if not os.path.exists("./snapshots"):
+                os.mkdir("./snapshots")
+
+            cv2.imwrite("./snapshots/" + file_name, self.frame)
 
 
 if __name__ == "__main__":
