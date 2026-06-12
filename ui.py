@@ -47,6 +47,12 @@ class UI:
         self.saturation_slider.set(1.0)
         self.saturation_slider.pack()
 
+        self.hue_slider = tk.Scale(root, label="Hue", 
+                                          from_=-180, to=180,
+                                          orient="horizontal")
+        self.hue_slider.set(0)
+        self.hue_slider.pack()
+
         self.running = True
 
         # start camera refresh loop
@@ -65,7 +71,8 @@ class UI:
             mirrored=self.webcam_mirrored.get(),
             brightness_offset=self.brightness_slider.get(),
             contrast_strength=self.contrast_slider.get(),
-            saturation_strength=self.saturation_slider.get()
+            saturation_strength=self.saturation_slider.get(),
+            hue_change=self.hue_slider.get()
         )
 
         if self.frame is not None:

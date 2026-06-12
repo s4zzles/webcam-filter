@@ -32,8 +32,17 @@ def saturation(img, saturation_strength):
     return np.clip(gray + color, 0, 255).astype(np.uint8)
 
 
-def temperature(img):
-    pass
+def hue(img, hue_change):
+    hue_change = hue_change / 2.0
+    hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # add hue_change offset to hue while ensuring wraparound
+    h = hsv_image[..., 0].astype(np.float32) 
+    h = (h + hue_change) % 180 
+    hsv_image[..., 0] = h.astype(np.uint8)
+
+    return cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGR)
+
 
 
 # Filter methods
