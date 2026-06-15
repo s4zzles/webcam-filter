@@ -145,8 +145,8 @@ class UI:
 
         if self.update_id is not None:
             self.root.after_cancel(self.update_id)
-
-        capture.release()
+        if self.capturing:
+            capture.release()
         self.root.destroy()
 
     def on_cam_button_pressed(self):
