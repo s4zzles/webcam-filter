@@ -1,5 +1,9 @@
 import cv2
 import numpy as np
+import mediapipe as mp
+
+mp_selfie = mp.solutions.selfie_segmentation
+segmenter = mp_selfie.SelfieSegmentation(model_selection=1)
 
 
 def mirror(img):
@@ -46,9 +50,19 @@ def hue(img, hue_change):
 
 
 # Filter methods
+def filter_bg(img):
 
-def blur_bg(img):
-    pass
+    # get segmentation mask from rgb
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    result = segmenter.process(rgb)
+    mask = result.segmentation_mask
+    mask = np.stack((mask, mask, mask), axis=2)
+
+    # blur entire image
+    blurred_img = cv2.GaussianBlur(img, (69, 69), 0)
+
+    # blends foreground(mask) with background(1-mask)
+    return (img * mask + blurred_img * (1 - mask)).astype(np.uint8)
 
 
 def kuwahara(img):

@@ -19,5 +19,6 @@ def process_frame(mirrored:bool,
     frame = filters.contrast(frame, contrast_strength)
     frame = filters.saturation(frame, saturation_strength)
     frame = filters.hue(frame, hue_change)
+    frame = filters.filter_bg(frame)
 
     return frame
