@@ -50,20 +50,29 @@ def hue(img, hue_change):
 
 
 # Filter methods
-def filter_bg(img):
-
+def create_mask(img):
     # get segmentation mask from rgb
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     result = segmenter.process(rgb)
     mask = result.segmentation_mask
-    mask = np.stack((mask, mask, mask), axis=2)
+    return np.stack((mask, mask, mask), axis=2)
+
+
+def blur_bg(img, blur_strength):
+
+    mask = create_mask(img)
+
+    # ensure input is odd (required for kernel size)
+    if blur_strength % 2 == 0:
+        blur_strength += 1
 
     # blur entire image
-    blurred_img = cv2.GaussianBlur(img, (69, 69), 0)
+    blurred_img = cv2.GaussianBlur(img, (blur_strength, blur_strength), 0)
 
     # blends foreground(mask) with background(1-mask)
     return (img * mask + blurred_img * (1 - mask)).astype(np.uint8)
 
 
-def kuwahara(img):
-    pass
+
+def kuwahara(img, kernel_size):
+    return img

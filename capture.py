@@ -2,6 +2,8 @@ import cv2
 
 capture = None
 
+
+
 def start() -> None:
     global capture 
     capture = cv2.VideoCapture(0)
