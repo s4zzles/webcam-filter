@@ -18,6 +18,12 @@ def process_frame(mirrored:bool,
 
     if mirrored:
         frame = filters.mirror(frame)
+     
+
+    frame = filters.brightness(frame, brightness_offset)
+    frame = filters.contrast(frame, contrast_strength)
+    frame = filters.saturation(frame, saturation_strength)
+    frame = filters.hue(frame, hue_change)
 
     match filter_mode:
         case "Blur Background":
@@ -25,11 +31,6 @@ def process_frame(mirrored:bool,
 
         case "Kuwahara":
             frame = filters.kuwahara(frame, kuwahara_ksize)
-        
-
-    frame = filters.brightness(frame, brightness_offset)
-    frame = filters.contrast(frame, contrast_strength)
-    frame = filters.saturation(frame, saturation_strength)
-    frame = filters.hue(frame, hue_change)
+   
 
     return frame

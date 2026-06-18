@@ -73,6 +73,57 @@ def blur_bg(img, blur_strength):
     return (img * mask + blurred_img * (1 - mask)).astype(np.uint8)
 
 
+# optimized for real time filtering
+# instead of calculating 4 means and variances of the quadrants for each pixel
+# the algorithm shifts the image in the 4 direction and calculates means and vari
+# on those shifted images
+def kuwahara(img, k_size=5):
+    # kernel size must be odd
+    assert k_size % 2 == 1
+    r = k_size // 2 # r = size of quadrant
+    img = img.astype(np.float32)
 
-def kuwahara(img, kernel_size):
-    return img
+    # shift helper function
+    # shifts img in the direction (dy, dx)
+    def shift(img, dy, dx):
+        # pure translation matrix (no warp, scale, rotate)
+        matrix = np.float32([[1, 0, dx], [0, 1, dy]])
+        return cv2.warpAffine(img, matrix, (img.shape[1], img.shape[0]),
+                              borderMode=cv2.BORDER_REFLECT)
+
+    # 4 shifted images representing the kernel quadrants
+    nw_quad = shift(img, -r, -r)
+    ne_quad = shift(img, -r, r)
+    sw_quad = shift(img, r, -r)
+    se_quad = shift(img, r, r)
+
+    # helper function for mean and variance calculation
+    def calc_mean_variance(img, k_size):
+        mean = cv2.blur(img, ksize=(k_size, k_size))
+        mean_sq = cv2.blur(img * img, ksize=(k_size, k_size))
+        vari = mean_sq - mean * mean
+        return mean, vari
+
+    nw_m, nw_v = calc_mean_variance(nw_quad, k_size)
+    ne_m, ne_v = calc_mean_variance(ne_quad, k_size)
+    sw_m, sw_v = calc_mean_variance(sw_quad, k_size)
+    se_m, se_v = calc_mean_variance(se_quad, k_size)
+
+    
+    # stack variances and get the index of the lowest variance
+    vari_stack = np.stack([nw_v, ne_v, sw_v, se_v], axis=-1)
+    index = np.argmin(vari_stack, axis=-1)
+
+    # stack means
+    mean_stack = np.stack([nw_m, ne_m, sw_m, se_m], axis=-1)
+
+    h, w = img.shape[:2]
+    out = np.zeros((h, w, 3), dtype=np.float32)
+
+    # create a mask for each of the 4 images to choose the
+    # mean of the image with the lowest varicance in that area 
+    for i in range(4):
+        mask = (index == i)
+        out += mean_stack[..., i] * mask
+
+    return np.clip(out, 0, 255).astype(np.uint8)

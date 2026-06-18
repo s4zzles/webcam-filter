@@ -119,7 +119,7 @@ class UI:
 
         self.filter_var = tk.StringVar()
         self.blur_var = tk.IntVar()
-        self.kuwahara_var = tk.IntVar()
+        self.kuwahara_var = tk.IntVar(value=5)
 
         self.filter_dropdown = ttk.Combobox(self.filter_frame,
                                             textvariable=self.filter_var,
