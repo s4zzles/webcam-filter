@@ -3,10 +3,10 @@ from tkinter import ttk
 
 import threading
 import datetime as dt
-import numpy as np
 from PIL import Image, ImageTk
 import cv2
 import os
+import pyvirtualcam
 
 import capture
 import pipeline
@@ -170,8 +170,7 @@ class UI:
                            variable=self.kuwahara_var).pack()
 
 
-
-    def update_image(self):
+    def calculate_image(self):
         if not self.running or not self.capturing:
             return
 
@@ -186,12 +185,11 @@ class UI:
             kuwahara_ksize=self.kuwahara_var.get()
         )
 
+    def update_image(self):
+        self.calculate_image()
         if self.image is not None:
-            scaled_image = self.fit_to_canvas(self.image, 640, 480)
-            rgb_image = cv2.cvtColor(scaled_image, cv2.COLOR_BGR2RGB)
-
             # Convert to PIL image
-            pil_image = Image.fromarray(rgb_image)
+            pil_image = Image.fromarray(self.image)
 
             # Convert to Tkinter image
             imgtk = ImageTk.PhotoImage(image=pil_image)
@@ -204,24 +202,6 @@ class UI:
         # update id gets set here for check if a loop is currently active
         self.update_id = self.root.after(15, self.update_image)
 
-    def fit_to_canvas(self, img, target_width, target_height):
-        height, width = img.shape[:2]
-        # determine which side's scale to use
-        scale = min((target_width / width), (target_height / height))
-        scaled_width = int(width * scale)
-        scaled_height = int(height * scale)
-        scaled_img = cv2.resize(img, (scaled_width, scaled_height))
-
-        # if aspect ratio is different use letterboxes/pillarboxes
-        canvas = np.zeros((target_height, target_width, 3), 
-                          dtype=np.uint8)
-
-        x_pos = int((target_width - scaled_width) / 2)
-        y_pos = int((target_height - scaled_height) / 2)
-
-        canvas[y_pos:y_pos+scaled_height, x_pos:x_pos+scaled_width] = scaled_img
-
-        return canvas
 
     def on_close(self):
         self.running = False
@@ -248,6 +228,8 @@ class UI:
     def camera_started(self):
         self.capturing = True
         self.update_image()
+        # start virtual cam in separate thread
+        threading.Thread(target=self.start_virtual_cam, daemon=True).start()
         self.cam_button.config(state="normal", text="Stop camera")
 
     def on_cam_button_pressed(self):
@@ -275,9 +257,12 @@ class UI:
 
             cv2.imwrite("./snapshots/" + file_name, self.image)
 
+    def start_virtual_cam(self):
+        with pyvirtualcam.Camera(width=640, height=480, fps=30) as cam:
+            print(f'Virtual cam started: {cam.device}')
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app_ui = UI(root)
-    root.resizable(False, False)
-    root.mainloop()
+            while self.running:
+                if self.capturing and self.image is not None:
+
+                    cam.send(self.image)
+                    cam.sleep_until_next_frame()

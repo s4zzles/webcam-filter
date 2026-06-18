@@ -1,3 +1,6 @@
+import cv2
+import numpy as np
+
 import capture
 import filters
 
@@ -31,6 +34,28 @@ def process_frame(mirrored:bool,
 
         case "Kuwahara":
             frame = filters.kuwahara(frame, kuwahara_ksize)
-   
 
-    return frame
+    scaled_frame = fit_to_canvas(frame, 640, 480)
+    rgb_frame = cv2.cvtColor(scaled_frame, cv2.COLOR_BGR2RGB)
+   
+    return rgb_frame
+
+
+def fit_to_canvas(img, target_width, target_height):
+    height, width = img.shape[:2]
+    # determine which side's scale to use
+    scale = min((target_width / width), (target_height / height))
+    scaled_width = int(width * scale)
+    scaled_height = int(height * scale)
+    scaled_img = cv2.resize(img, (scaled_width, scaled_height))
+
+    # if aspect ratio is different use letterboxes/pillarboxes
+    canvas = np.zeros((target_height, target_width, 3), 
+                    dtype=np.uint8)
+
+    x_pos = int((target_width - scaled_width) / 2)
+    y_pos = int((target_height - scaled_height) / 2)
+
+    canvas[y_pos:y_pos+scaled_height, x_pos:x_pos+scaled_width] = scaled_img
+
+    return canvas
