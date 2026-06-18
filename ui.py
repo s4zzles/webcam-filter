@@ -3,6 +3,7 @@ from tkinter import ttk
 
 import threading
 import datetime as dt
+import numpy as np
 from PIL import Image, ImageTk
 import cv2
 import os
@@ -186,8 +187,8 @@ class UI:
         )
 
         if self.image is not None:
-            #scaled_image = self.fit_to_canvas(self.image, 640, 480)
-            rgb_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+            scaled_image = self.fit_to_canvas(self.image, 640, 480)
+            rgb_image = cv2.cvtColor(scaled_image, cv2.COLOR_BGR2RGB)
 
             # Convert to PIL image
             pil_image = Image.fromarray(rgb_image)
@@ -204,7 +205,23 @@ class UI:
         self.update_id = self.root.after(15, self.update_image)
 
     def fit_to_canvas(self, img, target_width, target_height):
-        pass # todo
+        height, width = img.shape[:2]
+        # determine which side's scale to use
+        scale = min((target_width / width), (target_height / height))
+        scaled_width = int(width * scale)
+        scaled_height = int(height * scale)
+        scaled_img = cv2.resize(img, (scaled_width, scaled_height))
+
+        # if aspect ratio is different use letterboxes/pillarboxes
+        canvas = np.zeros((target_height, target_width, 3), 
+                          dtype=np.uint8)
+
+        x_pos = int((target_width - scaled_width) / 2)
+        y_pos = int((target_height - scaled_height) / 2)
+
+        canvas[y_pos:y_pos+scaled_height, x_pos:x_pos+scaled_width] = scaled_img
+
+        return canvas
 
     def on_close(self):
         self.running = False
