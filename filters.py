@@ -75,8 +75,8 @@ def blur_bg(img, blur_strength):
 
 # optimized for real time filtering
 # instead of calculating 4 means and variances of the quadrants for each pixel
-# the algorithm shifts the image in the 4 direction and calculates means and vari
-# on those shifted images
+# the algorithm shifts the image in the 4 direction, calculates means and vari
+# on those shifted images and applies them to the final image by masking
 def kuwahara(img, k_size=5):
     # kernel size must be odd
     assert k_size % 2 == 1

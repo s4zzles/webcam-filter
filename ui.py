@@ -162,6 +162,8 @@ class UI:
  
         elif selected == "Kuwahara":
             tk.Label(self.filter_options_frame, text="Kernel size:").pack()
+            tk.Radiobutton(self.filter_options_frame, text="3x3", value=3,
+                           variable=self.kuwahara_var).pack()
             tk.Radiobutton(self.filter_options_frame, text="5x5", value=5,
                            variable=self.kuwahara_var).pack()
             tk.Radiobutton(self.filter_options_frame, text="7x7", value=7,
