@@ -257,7 +257,10 @@ class UI:
             if not os.path.exists("./snapshots"):
                 os.mkdir("./snapshots")
 
-            cv2.imwrite("./snapshots/" + file_name, self.image)
+            # imwrite expects a bgr image
+            bgr_img = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
+
+            cv2.imwrite("./snapshots/" + file_name, bgr_img)
 
     def start_virtual_cam(self):
         with pyvirtualcam.Camera(width=640, height=480, fps=30) as cam:
